@@ -1,0 +1,43 @@
+name: Clean-Code-Check(CI)
+
+on:
+    pull_request:
+        branches: [main]
+
+env:
+    PYTHON_VERSION: 3.10
+
+jobs:
+    clean-code-check:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            
+            - name: Set up Python ${{env.PYTHON_VERSION}}
+              uses: actions/setup-python@v4
+              with:
+                  python-version: ${{env.PYTHON_VERSION}}
+            
+            - name: Setup Java
+              uses: actions/setup-java@v3
+              with:
+                  distribution: 'temurin'
+                  java-version: '11'
+            
+            - name: Setup UV
+              uses: uv-actions/setup-uv@v1
+            
+            - name: Install dependencies
+              run: uv sync --no-dev
+
+            - name: Run Black formatter
+              run: uv run black --check src tests
+
+            - name: Run Pylint
+              run: uv run pylint src/sales-data
+
+            - name: Run Mypy
+              run: uv run mypy src/sales-data
+
+            - name: Run Tests
+              run: uv run pytest
