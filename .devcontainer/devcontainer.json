@@ -37,5 +37,5 @@
             }
         }
     },
-    "postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && export PATH=\"$HOME/.local/bin:$PATH\" && uv sync --extra dev && uv run pre-commit install && echo 'source $(pwd)/.venv/bin/activate' >> ~/.bashrc"
+    "postCreateCommand": "curl -LsSf https://astral.sh/uv/0.11.19/install.sh | sh && export PATH=\"$HOME/.local/bin:$PATH\" && uv sync --extra dev && uv run pre-commit install && echo 'source $(pwd)/.venv/bin/activate' >> ~/.bashrc"
 }
