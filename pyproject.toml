@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "EternalSalesData"
+version = "0.1.0"
+description = "EternalTeleSales data analysis"
+requires-python = ">=3.10"
+dependencies = [
+    "pyspark==3.5.0",
+]
+
+[project.scripts]
+sales-data = "sales-data.main:main"
+
+[project.optional-dependencies]
+dev = [
+    "chispa==0.9.2",
+    "pytest==7.4.4",
+    "black==24.3.0",
+    "pylint==3.1.0",
+    "mypy==1.9.0",
+    "pre-commit==3.7.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sales-data"]
+
+# --- Black ---
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+# --- Pylint ---
+[tool.pylint.format]
+max-line-length = 100
+
+# --- Mypy ---
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+# --- Pytest ---
+[tool.pytest.ini_options]
+testpaths = ["tests"]
