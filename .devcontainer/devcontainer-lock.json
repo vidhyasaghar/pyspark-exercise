@@ -1,0 +1,24 @@
+{
+  "features": {
+    "ghcr.io/devcontainers-extra/features/actionlint:1": {
+      "version": "1.0.7",
+      "resolved": "ghcr.io/devcontainers-extra/features/actionlint@sha256:6a3dde90cb31e366892f8f2ebb766d73d7293d6e79ed9ac4041014d31599fdda",
+      "integrity": "sha256:6a3dde90cb31e366892f8f2ebb766d73d7293d6e79ed9ac4041014d31599fdda"
+    },
+    "ghcr.io/devcontainers-extra/features/pylint:2": {
+      "version": "2.0.18",
+      "resolved": "ghcr.io/devcontainers-extra/features/pylint@sha256:c5aa6c40c6f98d86b8faa06900755243d31fb5bb173fd24ba2b07c2139b361c4",
+      "integrity": "sha256:c5aa6c40c6f98d86b8faa06900755243d31fb5bb173fd24ba2b07c2139b361c4"
+    },
+    "ghcr.io/devcontainers-extra/features/spark-sdkman:2": {
+      "version": "2.0.17",
+      "resolved": "ghcr.io/devcontainers-extra/features/spark-sdkman@sha256:44d4ca3fecff0cfba1684246a7826101f03a47c1c4caec0a04b54a41dade910e",
+      "integrity": "sha256:44d4ca3fecff0cfba1684246a7826101f03a47c1c4caec0a04b54a41dade910e"
+    },
+    "ghcr.io/hspaans/devcontainer-features/pytest:2.0.0": {
+      "version": "2.0.0",
+      "resolved": "ghcr.io/hspaans/devcontainer-features/pytest@sha256:6ce02b88a2d4e894c9f4d3588df31723ed8978ed1da4c9561aec768d1aaf295b",
+      "integrity": "sha256:6ce02b88a2d4e894c9f4d3588df31723ed8978ed1da4c9561aec768d1aaf295b"
+    }
+  }
+}
