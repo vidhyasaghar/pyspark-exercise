@@ -1,0 +1,41 @@
+{
+    "name": "Python 3",
+    "image": "mcr.microsoft.com/devcontainers/python:1-3.10-bookworm",
+    "runArgs": ["--name","Python3.10Spark3.5.0"],
+    "workspaceFolder": "/workspaces/pyspark-exercise",
+    "features": {
+        "ghcr.io/devcontainers-extra/features/spark-sdkman:2": {
+            "version": "3.5.0"
+        },
+        "ghcr.io/devcontainers-extra/features/actionlint:1": {},
+        "ghcr.io/devcontainers-extra/features/pylint:2": {},
+        "ghcr.io/hspaans/devcontainer-features/pytest:2.0.0": {}        
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.black-formatter",
+                "ms-python.pylint",
+                "ms-python.mypy-type-checker",
+                "actionslint.vscode-actionlint",
+                "github.vscode-github-actions"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+                "[python]": {
+                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.formatOnSave": true
+                },
+                "black-formatter.args": ["--line-length", "100"],
+                "pylint.enabled": true,
+                "mypy-type-checker.enable": true,
+                "python.analysis.typeCheckingMode": "basic",
+                "python.analysis.extraPaths": ["src"]
+
+            }
+        }
+    },
+    "postCreateCommand": "curl -LsSf https://astral.sh/uv/0.11.19/install.sh | sh && export PATH=\"$HOME/.local/bin:$PATH\" && uv sync --extra dev && uv run pre-commit install && echo 'source $(pwd)/.venv/bin/activate' >> ~/.bashrc"
+}
