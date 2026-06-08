@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-sales-data = "sales-data.main:main"
+sales-data = "sales_data.main:main"
 
 [project.optional-dependencies]
 dev = [
@@ -21,11 +21,10 @@ dev = [
     "black==24.3.0",
     "pylint==3.1.0",
     "mypy==1.9.0",
-    "pre-commit==3.7.0",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/sales-data"]
+packages = ["src/sales_data"]
 
 # --- Black ---
 [tool.black]
@@ -46,3 +45,8 @@ ignore_missing_imports = true
 # --- Pytest ---
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "setuptools==80.10.2",
+]
