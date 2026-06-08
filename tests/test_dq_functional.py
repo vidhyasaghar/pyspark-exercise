@@ -52,7 +52,10 @@ class TestCheckCallsSuccessfulGtMade:
     def test_does_not_raise_when_halt_on_failure_and_no_violations(self, spark, mock_logger):
         df = make_df(spark, [(8, 10)], "calls_successful INT, calls_made INT")
 
-        assert dq_functional.check_calls_successful_gt_made(df, "dataset", halt_on_failure=True) is True
+        assert (
+            dq_functional.check_calls_successful_gt_made(df, "dataset", halt_on_failure=True)
+            is True
+        )
 
     def test_raises_runtime_error_when_columns_do_not_exist(self, spark, mock_logger):
         df = make_df(spark, [(1,)], "id INT")
