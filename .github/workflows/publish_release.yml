@@ -1,0 +1,45 @@
+name: Publish Release
+
+on:
+    push:
+        tags:
+            - "v*.*.*"
+
+env:
+    PYTHON_VERSION: "3.10"
+
+jobs:
+    clean-code-check:
+        uses: ./.github/workflows/ci_clean-code-check.yml
+
+    project-build:
+        needs: clean-code-check
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                python-version: ${{env.PYTHON_VERSION}}
+
+            - name: Setup UV
+              uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+              with:
+                version: '0.11.19'
+
+            - name: Build package
+              run: uv build
+
+    create-release:
+        needs: project-build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v1
+              with:
+                files: dist/*
+                draft: false
+                prerelease: false
