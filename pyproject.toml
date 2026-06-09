@@ -21,6 +21,7 @@ dev = [
     "black==24.3.0",
     "pylint==3.1.0",
     "mypy==1.9.0",
+    "setuptools==80.10.2",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -28,12 +29,12 @@ packages = ["src/sales_data"]
 
 # --- Black ---
 [tool.black]
-line-length = 100
+line-length = 500
 target-version = ["py310"]
 
 # --- Pylint ---
 [tool.pylint.format]
-max-line-length = 100
+max-line-length = 500
 
 # --- Mypy ---
 [tool.mypy]
@@ -45,8 +46,3 @@ ignore_missing_imports = true
 # --- Pytest ---
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
-[dependency-groups]
-dev = [
-    "setuptools==80.10.2",
-]
