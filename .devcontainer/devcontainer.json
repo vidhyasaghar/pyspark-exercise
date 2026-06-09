@@ -5,7 +5,8 @@
     "workspaceFolder": "/workspaces/pyspark-exercise",
     "features": {
         "ghcr.io/devcontainers-extra/features/spark-sdkman:2": {
-            "version": "3.5.0"
+            "version": "3.5.0",
+            "jdkVersion": "17"
         },
         "ghcr.io/devcontainers-extra/features/actionlint:1": {},
         "ghcr.io/devcontainers-extra/features/pylint:2": {},
@@ -32,7 +33,7 @@
                 "pylint.enabled": true,
                 "mypy-type-checker.enable": true,
                 "python.analysis.typeCheckingMode": "basic",
-                "python.analysis.extraPaths": ["src"]
+                "python.analysis.extraPaths": ["./src"]
 
             }
         }

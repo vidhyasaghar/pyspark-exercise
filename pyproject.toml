@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-sales-data = "sales-data.main:main"
+sales-data = "sales_data.main:main"
 
 [project.optional-dependencies]
 dev = [
@@ -21,20 +21,20 @@ dev = [
     "black==24.3.0",
     "pylint==3.1.0",
     "mypy==1.9.0",
-    "pre-commit==3.7.0",
+    "setuptools==80.10.2",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/sales-data"]
+packages = ["src/sales_data"]
 
 # --- Black ---
 [tool.black]
-line-length = 100
+line-length = 500
 target-version = ["py310"]
 
 # --- Pylint ---
 [tool.pylint.format]
-max-line-length = 100
+max-line-length = 500
 
 # --- Mypy ---
 [tool.mypy]
