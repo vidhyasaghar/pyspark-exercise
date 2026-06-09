@@ -1,7 +1,7 @@
 """
 Data quality checks for Sales data analysis pipeline.
 
-:description: Basic and intermediate validations applied to each dataset
+:description: Common validations applied to each dataset
     before any processing begins. Warnings are logged for every issue found.
     Passing ``halt_on_failure=True`` raises a ``RuntimeError`` on failure.
 """

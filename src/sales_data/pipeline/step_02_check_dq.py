@@ -50,7 +50,7 @@ def run_common_checks(
     df3: DataFrame,
     ctx: PipelineContext,
 ) -> None:
-    """Run basic data quality checks (row counts, uniqueness, nulls) on all datasets.
+    """Run common data quality checks (row counts, uniqueness, nulls, referential integrity ) on all datasets.
 
     :param df1: Employee_details DataFrame.
     :type df1: DataFrame
