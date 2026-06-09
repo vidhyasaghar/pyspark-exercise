@@ -14,7 +14,7 @@ def read_csv_with_header(spark, path: str) -> DataFrame:
         logger.error("Invalid file path: %s", path)
         raise ValueError(f"Invalid file path: {path}")
     try:
-        df = spark.read.option("header", "true").option("inferSchema", "true").csv(path)
+        df: DataFrame = spark.read.option("header", "true").option("inferSchema", "true").csv(path)
         logger.info("Successfully read CSV from %s", path)
         return df
     except Exception as e:
