@@ -5,3 +5,4 @@ __pycache__/
 .vscode/
 logs
 output
+src/sales_data/pipeline/test.ipynb
