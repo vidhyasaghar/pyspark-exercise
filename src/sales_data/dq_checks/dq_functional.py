@@ -14,9 +14,7 @@ from sales_data.utils.logger_config import get_logger
 logger = get_logger(__name__)
 
 
-def check_calls_successful_gt_made(
-    df: DataFrame, dataset_name: str, halt_on_failure: bool = False
-) -> bool:
+def check_calls_successful_gt_made(df: DataFrame, dataset_name: str, halt_on_failure: bool = False) -> bool:
     """
     Ensure ``calls_successful`` is never greater than ``calls_made``.
 
@@ -39,9 +37,7 @@ def check_calls_successful_gt_made(
             dataset_name,
             e,
         )
-        raise RuntimeError(
-            f"Error occurred while checking dependent attributes in {dataset_name}: {e}"
-        ) from e
+        raise RuntimeError(f"Error occurred while checking dependent attributes in {dataset_name}: {e}") from e
     if violations > 0:
         logger.warning(
             "[%s] %d row(s) where calls_successful > calls_made.",
@@ -49,9 +45,7 @@ def check_calls_successful_gt_made(
             violations,
         )
         if halt_on_failure:
-            raise RuntimeError(
-                f"Dependent attributes check failed in {dataset_name}: {violations} violation(s)."
-            )
+            raise RuntimeError(f"Dependent attributes check failed in {dataset_name}: {violations} violation(s).")
         return False
     logger.info("[%s] calls_successful <= calls_made: OK.", dataset_name)
     return True
@@ -83,9 +77,7 @@ def check_address_format(df: DataFrame, dataset_name: str, halt_on_failure: bool
             dataset_name,
             e,
         )
-        raise RuntimeError(
-            f"Error occurred while checking address format in {dataset_name}: {e}"
-        ) from e
+        raise RuntimeError(f"Error occurred while checking address format in {dataset_name}: {e}") from e
     if invalid > 0:
         logger.warning(
             "[%s] %d address(es) do not match the expected format.",
@@ -93,9 +85,7 @@ def check_address_format(df: DataFrame, dataset_name: str, halt_on_failure: bool
             invalid,
         )
         if halt_on_failure:
-            raise RuntimeError(
-                f"Address format check failed in {dataset_name}: {invalid} invalid address(es)."
-            )
+            raise RuntimeError(f"Address format check failed in {dataset_name}: {invalid} invalid address(es).")
         return False
     logger.info("[%s] All addresses valid: OK.", dataset_name)
     return True

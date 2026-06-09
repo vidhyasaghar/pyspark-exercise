@@ -1,3 +1,5 @@
+"""Data quality checks package."""
+
 from sales_data.dq_checks.dq_common import *
 from sales_data.dq_checks.dq_functional import *
 

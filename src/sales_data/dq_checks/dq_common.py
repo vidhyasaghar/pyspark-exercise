@@ -14,9 +14,7 @@ from sales_data.utils.logger_config import get_logger
 logger = get_logger(__name__)
 
 
-def check_row_count(
-    df: DataFrame, expected: int, dataset_name: str, halt_on_failure: bool = False
-) -> bool:
+def check_row_count(df: DataFrame, expected: int, dataset_name: str, halt_on_failure: bool = False) -> bool:
     """
     Verify that *df* contains *expected* rows.
 
@@ -46,9 +44,7 @@ def check_row_count(
     return True
 
 
-def check_col_non_null(
-    df: DataFrame, dataset_name: str, column_names: list[str], halt_on_failure: bool = False
-) -> bool:
+def check_col_non_null(df: DataFrame, dataset_name: str, column_names: list[str], halt_on_failure: bool = False) -> bool:
     """
     Ensure the specified columns have no nulls.
 
@@ -83,17 +79,13 @@ def check_col_non_null(
             errors.append(col)
             ok = False
     if errors and halt_on_failure:
-        raise RuntimeError(
-            f"Null values found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details."
-        )
+        raise RuntimeError(f"Null values found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details.")
     if ok:
         logger.info("[%s] %s non-null: OK.", dataset_name, ", ".join(column_names))
     return ok
 
 
-def check_col_unique(
-    df: DataFrame, dataset_name: str, column_names: list[str], halt_on_failure: bool = False
-) -> bool:
+def check_col_unique(df: DataFrame, dataset_name: str, column_names: list[str], halt_on_failure: bool = False) -> bool:
     """
     Ensure the specified columns have no duplicates.
 
@@ -135,18 +127,14 @@ def check_col_unique(
             errors.append(col)
             ok = False
     if errors and halt_on_failure:
-        raise RuntimeError(
-            f"Duplicates found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details."
-        )
+        raise RuntimeError(f"Duplicates found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details.")
 
     if ok:
         logger.info("[%s] All columns unique: OK.", dataset_name)
     return ok
 
 
-def check_col_non_negative(
-    df: DataFrame, columns: list[str], dataset_name: str, halt_on_failure: bool = False
-) -> bool:
+def check_col_non_negative(df: DataFrame, columns: list[str], dataset_name: str, halt_on_failure: bool = False) -> bool:
     """
     Ensure numeric *columns* contain no negative values.
 
@@ -186,9 +174,7 @@ def check_col_non_negative(
             errors.append(col)
             ok = False
     if errors and halt_on_failure:
-        raise RuntimeError(
-            f"Negative values found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details."
-        )
+        raise RuntimeError(f"Negative values found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details.")
 
     if ok:
         logger.info("[%s] All specified columns non-negative: OK.", dataset_name)
@@ -196,7 +182,7 @@ def check_col_non_negative(
     return ok
 
 
-def check_referential_integrity(
+def check_referential_integrity(  # pylint: disable=too-many-arguments
     parent_table: DataFrame,
     parent_keys: list[str],
     child_table: DataFrame,
@@ -226,18 +212,14 @@ def check_referential_integrity(
         or when the check itself fails to run.
     """
     try:
-        orphan_count = (
-            child_table.select(*child_keys).subtract(parent_table.select(*parent_keys)).count()
-        )
+        orphan_count = child_table.select(*child_keys).subtract(parent_table.select(*parent_keys)).count()
     except Exception as e:  # pylint: disable=broad-except
         logger.error(
             "[%s] Error occurred while checking referential integrity: %s",
             dataset_name,
             e,
         )
-        raise RuntimeError(
-            f"Error occurred while checking referential integrity in {dataset_name}: {e}"
-        ) from e
+        raise RuntimeError(f"Error occurred while checking referential integrity in {dataset_name}: {e}") from e
     if orphan_count > 0:
         logger.warning(
             "[%s] Referential integrity check failed: %d row(s) in child table have no match in parent table.",
@@ -245,9 +227,7 @@ def check_referential_integrity(
             orphan_count,
         )
         if halt_on_failure:
-            raise RuntimeError(
-                f"Referential integrity failed in {dataset_name}: {orphan_count} orphan row(s)."
-            )
+            raise RuntimeError(f"Referential integrity failed in {dataset_name}: {orphan_count} orphan row(s).")
         return False
     logger.info("[%s] Referential integrity: All rows matched: OK.", dataset_name)
     return True
