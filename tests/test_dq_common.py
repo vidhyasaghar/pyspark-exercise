@@ -158,41 +158,29 @@ class TestCheckReferentialIntegrity:
         parent = make_df(spark, [(1,), (2,), (3,)], "id INT")
         child = make_df(spark, [(1,), (2,)], "id INT")
 
-        assert (
-            dq_common.check_referential_integrity(parent, ["id"], child, ["id"], "dataset") is True
-        )
+        assert dq_common.check_referential_integrity(parent, ["id"], child, ["id"], "dataset") is True
         mock_logger.warning.assert_not_called()
 
     def test_returns_false_and_logs_warning_when_orphans_exist(self, spark, mock_logger):
         parent = make_df(spark, [(1,), (2,)], "id INT")
         child = make_df(spark, [(1,), (99,)], "id INT")
 
-        assert (
-            dq_common.check_referential_integrity(parent, ["id"], child, ["id"], "dataset") is False
-        )
+        assert dq_common.check_referential_integrity(parent, ["id"], child, ["id"], "dataset") is False
         mock_logger.warning.assert_called_once()
 
-    def test_raises_with_dataset_name_and_orphan_count_when_halt_on_failure(
-        self, spark, mock_logger
-    ):
+    def test_raises_with_dataset_name_and_orphan_count_when_halt_on_failure(self, spark, mock_logger):
         """Regression test for the previously-broken RuntimeError message formatting."""
         parent = make_df(spark, [(1,)], "id INT")
         child = make_df(spark, [(1,), (2,), (3,)], "id INT")
 
-        with pytest.raises(
-            RuntimeError, match=r"Referential integrity failed in dataset: 2 orphan row"
-        ):
-            dq_common.check_referential_integrity(
-                parent, ["id"], child, ["id"], "dataset", halt_on_failure=True
-            )
+        with pytest.raises(RuntimeError, match=r"Referential integrity failed in dataset: 2 orphan row"):
+            dq_common.check_referential_integrity(parent, ["id"], child, ["id"], "dataset", halt_on_failure=True)
 
     def test_raises_runtime_error_when_join_keys_do_not_exist(self, spark, mock_logger):
         parent = make_df(spark, [(1,)], "id INT")
         child = make_df(spark, [(1,)], "other_id INT")
 
-        with pytest.raises(
-            RuntimeError, match="Error occurred while checking referential integrity in dataset"
-        ):
+        with pytest.raises(RuntimeError, match="Error occurred while checking referential integrity in dataset"):
             dq_common.check_referential_integrity(parent, ["id"], child, ["id"], "dataset")
 
         mock_logger.error.assert_called_once()
