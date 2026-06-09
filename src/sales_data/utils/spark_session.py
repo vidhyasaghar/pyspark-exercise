@@ -6,7 +6,16 @@ from sales_data.utils.logger_config import get_logger
 
 
 def get_spark_session(app_name: str, logger=None) -> SparkSession:
-    """Create or retrieve a SparkSession with recommended adaptive query configs."""
+    """Create or retrieve a SparkSession with recommended adaptive query execution configs.
+
+    :param app_name: Spark application name; defaults to ``"SparkSession"`` if empty.
+    :type app_name: str
+    :param logger: Optional logger for init/error messages.
+    :type logger: logging.Logger, optional
+    :returns: Active or newly created SparkSession.
+    :rtype: pyspark.sql.SparkSession
+    :raises Exception: Re-raises any exception thrown by the SparkSession builder.
+    """
     if not app_name:
         app_name = "SparkSession"
 

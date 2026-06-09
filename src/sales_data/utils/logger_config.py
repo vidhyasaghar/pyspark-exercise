@@ -93,7 +93,7 @@ def _build_log4j_handler(
     :type spark_session: pyspark.sql.SparkSession
     :param formatter: Formatter to attach to the handler.
     :type formatter: logging.Formatter
-    :return: Configured handler or ``None``.
+    :returns: Configured handler or ``None``.
     :rtype: SparkLog4jHandler or None
     """
     try:
@@ -138,7 +138,7 @@ def get_logger(
     :type level: int
     :param spark_session: Optional SparkSession for Log4j bridging.
     :type spark_session: pyspark.sql.SparkSession, optional
-    :return: Configured logger with all relevant handlers attached.
+    :returns: Configured logger with all relevant handlers attached.
     :rtype: logging.Logger
     :raises ValueError: If ``name`` is empty.
     """
