@@ -1,7 +1,6 @@
 """CLI entry point for sales data processing pipeline."""
 
 import argparse
-import logging
 from pathlib import Path
 
 from sales_data.pipeline.orchestrator import Orchestrator
@@ -13,8 +12,8 @@ logger = get_logger(__name__)
 def main() -> int:
     """Parse CLI arguments and run the pipeline orchestrator.
 
-    Returns:
-        Exit code (0 for success, 1 for failure).
+    :returns: Exit code (0 for success, 1 for failure).
+    :rtype: int
     """
 
     _DQ_CHECKS = {
@@ -61,9 +60,7 @@ def main() -> int:
         "--halt",
         type=str,
         default="",
-        help="Comma-separated list of specific DQ checks to halt on "
-        "(row_count, col_unique, col_non_null, referential_integrity, "
-        "calls_successful_gt_made, address_format)",
+        help="Comma-separated list of specific DQ checks to halt on " "(row_count, col_unique, col_non_null, referential_integrity, " "calls_successful_gt_made, address_format)",
     )
     args = parser.parse_args()
 
