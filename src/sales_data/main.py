@@ -17,14 +17,13 @@ _DQ_CHECKS = {
     "address_format",
 }
 
+
 def main() -> int:
     """Parse CLI arguments and run the pipeline orchestrator.
 
     :returns: Exit code (0 for success, 1 for failure).
     :rtype: int
     """
-
-
 
     parser = argparse.ArgumentParser(
         description="EternalTeleSales data processing pipeline",
