@@ -8,6 +8,14 @@ from sales_data.utils.logger_config import get_logger
 
 logger = get_logger(__name__)
 
+_DQ_CHECKS = {
+    "row_count",
+    "col_unique",
+    "col_non_null",
+    "referential_integrity",
+    "calls_successful_gt_made",
+    "address_format",
+}
 
 def main() -> int:
     """Parse CLI arguments and run the pipeline orchestrator.
@@ -16,14 +24,7 @@ def main() -> int:
     :rtype: int
     """
 
-    _DQ_CHECKS = {
-        "row_count",
-        "col_unique",
-        "col_non_null",
-        "referential_integrity",
-        "calls_successful_gt_made",
-        "address_format",
-    }
+
 
     parser = argparse.ArgumentParser(
         description="EternalTeleSales data processing pipeline",
