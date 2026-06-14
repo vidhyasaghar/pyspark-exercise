@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Set
 
 
 class ExecutionStatus(Enum):
@@ -12,7 +11,6 @@ class ExecutionStatus(Enum):
     PENDING = "pending"
     SUCCESS = "success"
     FAILED = "failed"
-    SKIPPED = "skipped"
 
 
 @dataclass
@@ -24,13 +22,13 @@ class PipelineContext:
     dataset_two: Path
     dataset_three: Path
     output_dir: Path
-    halt_checks: Set[str] = field(default_factory=set)
+    halt_checks: set[str] = field(default_factory=set)
 
     # Status tracking
     init_status: ExecutionStatus = field(default=ExecutionStatus.PENDING)
     dq_status: ExecutionStatus = field(default=ExecutionStatus.PENDING)
-    report_statuses: Dict[str, ExecutionStatus] = field(default_factory=dict)
-    errors: list[Any] = field(default_factory=list)
+    report_statuses: dict[str, ExecutionStatus] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
 
     def add_error(self, error: str) -> None:
         """Append an error message to the context error list.

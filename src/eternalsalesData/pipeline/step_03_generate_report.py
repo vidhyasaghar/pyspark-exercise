@@ -4,9 +4,9 @@ from pathlib import Path
 from functools import wraps
 from pyspark.sql import DataFrame, Window
 from pyspark.sql import functions as F
-from eternalsalesData.pipeline.context import ExecutionStatus, PipelineContext
-from eternalsalesData.utils import spark_session, spark_utils
-from eternalsalesData.utils.logger_config import get_logger
+from eternalsalesdata.pipeline.context import ExecutionStatus, PipelineContext
+from eternalsalesdata.utils import spark_session, spark_utils
+from eternalsalesdata.utils.logger_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -24,12 +24,8 @@ def transform(output_dir: str):
     """
 
     def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-
         TRANSFORMS[func] = output_dir
-        return wrapper
+        return func
 
     return decorator
 
@@ -54,6 +50,7 @@ def transform_it_data(df1: DataFrame, df2: DataFrame, df3: DataFrame) -> DataFra
     result = (
         df1.join(df2, on="id", how="inner")
         .filter(F.col("area") == "IT")
+        .withColumn("sales_amount", F.coalesce(F.col("sales_amount"), F.lit(0.0)))
         .orderBy(F.col("sales_amount").desc())
         .limit(100)
     )
@@ -63,7 +60,7 @@ def transform_it_data(df1: DataFrame, df2: DataFrame, df3: DataFrame) -> DataFra
 @transform("marketing_address_info")
 def transform_marketing_address_info(df1: DataFrame, df2: DataFrame, df3: DataFrame) -> DataFrame:
     # pylint: disable=unused-argument
-    """Extract structured address components for Marketing department employees.
+    """Extract name, address (without zip), and zip code for Marketing department employees.
 
     :param df1: Employee_details DataFrame.
     :type df1: DataFrame
@@ -71,25 +68,15 @@ def transform_marketing_address_info(df1: DataFrame, df2: DataFrame, df3: DataFr
     :type df2: DataFrame
     :param df3: Sales_details DataFrame (unused).
     :type df3: DataFrame
-    :returns: DataFrame with name, street_and_number, area, and zip_code columns.
+    :returns: DataFrame with name, address (zip stripped), and zip_code columns.
     :rtype: DataFrame
     """
     result = (
         df1.join(df2, on="id", how="inner")
         .filter(F.col("area") == "Marketing")
-        .withColumn(
-            "address_without_zip", F.regexp_replace(F.col("address"), r"\d{4} [A-Z]{2}", "")
-        )
-        .withColumn(
-            "only_area", F.regexp_replace(F.col("address_without_zip"), r"([A-Za-z ]+ \d+)", "")
-        )
         .withColumn("zip_code", F.regexp_extract(F.col("address"), r"(\d{4} [A-Z]{2})", 1))
-        .withColumn(
-            "street_and_number",
-            F.regexp_extract(F.col("address_without_zip"), r"([A-Za-z ]+ \d+)", 1),
-        )
-        .withColumn("area", F.regexp_replace(F.col("only_area"), r"[,\s+]", ""))
-        .select("name", "street_and_number", "area", "zip_code")
+        .withColumn("address", F.regexp_replace(F.col("address"), r",\s*\d{4} [A-Z]{2}$", ""))
+        .select("name", "address", "zip_code")
     )
     return result
 

@@ -1,15 +1,15 @@
-"""Tests for sales_data.pipeline.orchestrator."""
+"""Tests for eternalsalesdata.pipeline.orchestrator."""
 
 import argparse
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sales_data.pipeline.orchestrator import Orchestrator
+from eternalsalesdata.pipeline.orchestrator import Orchestrator
 
-_PATCH_INIT = "sales_data.pipeline.orchestrator.initialize.run"
-_PATCH_DQ = "sales_data.pipeline.orchestrator.dq_check.run"
-_PATCH_REPORT = "sales_data.pipeline.orchestrator.generate_report.run"
+_PATCH_INIT = "eternalsalesdata.pipeline.orchestrator.initialize.run"
+_PATCH_DQ = "eternalsalesdata.pipeline.orchestrator.dq_check.run"
+_PATCH_REPORT = "eternalsalesdata.pipeline.orchestrator.generate_report.run"
 
 
 def _make_orchestrator() -> Orchestrator:
@@ -48,7 +48,7 @@ def test_init_resolves_paths_and_populates_context() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Orchestrator.run
+# Orchestrator.run — happy path
 # ---------------------------------------------------------------------------
 
 
@@ -67,6 +67,11 @@ def test_run_all_steps_succeed_returns_ctx_and_calls_summarise() -> None:
 
     mock_summarise.assert_called_once()
     assert result is original_ctx
+
+
+# ---------------------------------------------------------------------------
+# Orchestrator.run — caught failures (abort pipeline, return ctx)
+# ---------------------------------------------------------------------------
 
 
 def test_run_aborts_after_initialize_file_not_found() -> None:
@@ -119,6 +124,11 @@ def test_run_aborts_after_report_runtime_error() -> None:
     assert result is orch._ctx
 
 
+# ---------------------------------------------------------------------------
+# Orchestrator.run — uncaught exceptions (programming / infrastructure errors)
+# ---------------------------------------------------------------------------
+
+
 def test_run_oserror_from_initialize_propagates_uncaught() -> None:
     orch = _make_orchestrator()
     mock_dq = MagicMock()
@@ -134,3 +144,32 @@ def test_run_oserror_from_initialize_propagates_uncaught() -> None:
 
     mock_dq.assert_not_called()
     mock_report.assert_not_called()
+
+
+def test_run_value_error_from_dq_propagates_uncaught() -> None:
+    orch = _make_orchestrator()
+    original_ctx = orch._ctx
+    mock_report = MagicMock()
+
+    with (
+        patch(_PATCH_INIT, return_value=original_ctx),
+        patch(_PATCH_DQ, side_effect=ValueError("bad column")),
+        patch(_PATCH_REPORT, new=mock_report),
+        pytest.raises(ValueError, match="bad column"),
+    ):
+        orch.run()
+
+    mock_report.assert_not_called()
+
+
+def test_run_value_error_from_report_propagates_uncaught() -> None:
+    orch = _make_orchestrator()
+    original_ctx = orch._ctx
+
+    with (
+        patch(_PATCH_INIT, return_value=original_ctx),
+        patch(_PATCH_DQ, return_value=original_ctx),
+        patch(_PATCH_REPORT, side_effect=ValueError("bad column")),
+        pytest.raises(ValueError, match="bad column"),
+    ):
+        orch.run()

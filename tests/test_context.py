@@ -1,8 +1,8 @@
-"""Tests for sales_data.pipeline.context."""
+"""Tests for eternalsalesdata.pipeline.context."""
 
 from pathlib import Path
 
-from eternalsalesData.pipeline.context import ExecutionStatus, PipelineContext
+from eternalsalesdata.pipeline.context import ExecutionStatus, PipelineContext
 
 
 def _make_ctx() -> PipelineContext:
@@ -54,6 +54,7 @@ def test_default_errors_and_halt_checks_are_empty() -> None:
 
     assert ctx.errors == []
     assert ctx.halt_checks == set()
+    assert ctx.report_statuses == {}
 
 
 def test_mutable_defaults_not_shared_between_instances() -> None:
@@ -62,6 +63,8 @@ def test_mutable_defaults_not_shared_between_instances() -> None:
 
     ctx1.add_error("ctx1 error")
     ctx1.halt_checks.add("row_count")
+    ctx1.report_statuses["it_data"] = ExecutionStatus.SUCCESS
 
     assert ctx2.errors == []
     assert ctx2.halt_checks == set()
+    assert ctx2.report_statuses == {}
