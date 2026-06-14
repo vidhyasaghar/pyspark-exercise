@@ -2,7 +2,7 @@
 
 from pyspark.sql import SparkSession
 
-from eternalsalesData.utils.logger_config import get_logger
+from eternalsalesdata.utils.logger_config import get_logger
 
 
 def get_spark_session(app_name: str, logger=None) -> SparkSession:
