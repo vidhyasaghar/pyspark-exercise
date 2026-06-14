@@ -9,7 +9,7 @@ Basic data quality checks for Sales data analysis pipeline.
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
-from eternalsalesData.utils.logger_config import get_logger
+from eternalsalesdata.utils.logger_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -63,21 +63,13 @@ def check_col_non_null(
     :return: ``True`` when all checks pass.
     :rtype: bool
     """
+    missing = [col for col in column_names if col not in df.columns]
+    if missing:
+        raise ValueError(f"Column(s) not found in DataFrame: {', '.join(missing)}")
     ok = True
     errors: list[str] = []
     for col in column_names:
-        try:
-            null_count = df.filter(F.col(col).isNull()).count()
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error(
-                "[%s] Error checking nulls in column '%s': %s",
-                dataset_name,
-                col,
-                e,
-            )
-            errors.append(col)
-            ok = False
-            continue
+        null_count = df.filter(F.col(col).isNull()).count()
         if null_count > 0:
             logger.warning("[%s] %s has %d null(s).", dataset_name, col, null_count)
             errors.append(col)
@@ -108,22 +100,14 @@ def check_col_unique(
     :return: ``True`` when all checks pass.
     :rtype: bool
     """
+    missing = [col for col in column_names if col not in df.columns]
+    if missing:
+        raise ValueError(f"Column(s) not found in DataFrame: {', '.join(missing)}")
     ok = True
     errors: list[str] = []
     total = df.count()
     for col in column_names:
-        try:
-            distinct = df.select(col).distinct().count()
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error(
-                "[%s] Error checking uniqueness in column '%s': %s",
-                dataset_name,
-                col,
-                e,
-            )
-            errors.append(col)
-            ok = False
-            continue
+        distinct = df.select(col).distinct().count()
         if distinct != total:
             logger.warning(
                 "[%s] %s has duplicates: %d total vs %d distinct.",
@@ -161,21 +145,13 @@ def check_col_non_negative(
     :return: ``True`` when all columns pass.
     :rtype: bool
     """
+    missing = [col for col in columns if col not in df.columns]
+    if missing:
+        raise ValueError(f"Column(s) not found in DataFrame: {', '.join(missing)}")
     ok = True
     errors: list[str] = []
     for col in columns:
-        try:
-            neg_count = df.filter(F.col(col) < 0).count()
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error(
-                "[%s] Error checking non-negativity in column '%s': %s",
-                dataset_name,
-                col,
-                e,
-            )
-            errors.append(col)
-            ok = False
-            continue
+        neg_count = df.filter(F.col(col) < 0).count()
         if neg_count > 0:
             logger.warning(
                 "[%s] Column '%s' has %d negative value(s).",

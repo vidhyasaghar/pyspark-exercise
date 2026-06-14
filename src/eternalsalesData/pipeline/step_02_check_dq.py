@@ -2,10 +2,10 @@
 
 from pyspark.sql import DataFrame
 
-import eternalsalesData.dq_checks as dq
-from eternalsalesData.pipeline.context import ExecutionStatus, PipelineContext
-from eternalsalesData.utils import spark_session, spark_utils
-from eternalsalesData.utils.logger_config import get_logger
+import eternalsalesdata.dq_checks as dq
+from eternalsalesdata.pipeline.context import ExecutionStatus, PipelineContext
+from eternalsalesdata.utils import spark_session, spark_utils
+from eternalsalesdata.utils.logger_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -27,8 +27,8 @@ def run(ctx: PipelineContext) -> PipelineContext:
         df2 = spark_utils.read_csv_with_header(spark, str(ctx.dataset_two))
         df3 = spark_utils.read_csv_with_header(spark, str(ctx.dataset_three))
 
-        run_common_checks(df1, df2, df3, ctx)
-        run_functional_checks(df1, df2, ctx)
+        run_basic_checks(df1, df2, df3, ctx)
+        run_intermediate_checks(df1, df2, df3, ctx)
 
         ctx.dq_status = ExecutionStatus.SUCCESS
         logger.info("Data quality checks completed successfully")
@@ -44,19 +44,19 @@ def run(ctx: PipelineContext) -> PipelineContext:
         raise
 
 
-def run_common_checks(
+def run_basic_checks(
     df1: DataFrame,
     df2: DataFrame,
     df3: DataFrame,
     ctx: PipelineContext,
 ) -> None:
-    """Run common data quality checks (row counts, uniqueness, nulls, referential integrity ) on all datasets.
+    """Run common data quality checks (row counts, uniqueness, nulls, non-negative, referential integrity) on all datasets.
 
-    :param df1: Employee_details DataFrame.
+    :param df1: Employee_calls DataFrame (dataset_one).
     :type df1: DataFrame
-    :param df2: Employee_calls DataFrame.
+    :param df2: Employee_details DataFrame (dataset_two).
     :type df2: DataFrame
-    :param df3: Sales_details DataFrame.
+    :param df3: Sales_details DataFrame (dataset_three).
     :type df3: DataFrame
     :param ctx: Pipeline context with halt configuration.
     :type ctx: PipelineContext
@@ -64,30 +64,31 @@ def run_common_checks(
     """
     logger.info("=== Common data quality checks ===")
 
-    for df, dataset_name, expected_row_count in zip(
+    halt_row_count = "row_count" in ctx.halt_checks
+    halt_col_unique = "col_unique" in ctx.halt_checks
+    halt_col_non_null = "col_non_null" in ctx.halt_checks
+    halt_col_non_negative = "col_non_negative" in ctx.halt_checks
+
+    for df, dataset_name, expected_row_count, non_negative_cols in zip(
         [df1, df2, df3],
-        ["Employee_details", "Employee_calls", "Sales_details"],
+        ["Employee_calls", "Employee_details", "Sales_details"],
         [1000, 1000, 10000],
+        [
+            ["calls_made", "calls_successful"],
+            ["sales_amount"],
+            ["quantity", "age"],
+        ],
     ):
-        should_halt = "row_count" in ctx.halt_checks
-        dq.check_row_count(df, expected_row_count, dataset_name, should_halt)
-
-        should_halt = "col_unique" in ctx.halt_checks
-        dq.check_col_unique(df, dataset_name, ["id"], should_halt)
-
-        should_halt = "col_non_null" in ctx.halt_checks
-        dq.check_col_non_null(df, dataset_name, ["id"], should_halt)
-
-    should_halt = "referential_integrity" in ctx.halt_checks
-    dq.check_referential_integrity(df1, ["id"], df2, ["id"], "Employee_details", should_halt)
-    dq.check_referential_integrity(df2, ["id"], df1, ["id"], "Employee_calls", should_halt)
-    dq.check_referential_integrity(df2, ["id"], df3, ["caller_id"], "Employee_calls", should_halt)
-    dq.check_referential_integrity(df1, ["id"], df3, ["caller_id"], "Employee_details", should_halt)
+        dq.check_row_count(df, expected_row_count, dataset_name, halt_row_count)
+        dq.check_col_unique(df, dataset_name, ["id"], halt_col_unique)
+        dq.check_col_non_null(df, dataset_name, ["id"], halt_col_non_null)
+        dq.check_col_non_negative(df, non_negative_cols, dataset_name, halt_col_non_negative)
 
 
-def run_functional_checks(
+def run_intermediate_checks(
     df1: DataFrame,
     df2: DataFrame,
+    df3: DataFrame,
     ctx: PipelineContext,
 ) -> None:
     """Run functional data quality checks (dependent attributes, address formats).
@@ -107,3 +108,8 @@ def run_functional_checks(
 
     should_halt = "address_format" in ctx.halt_checks
     dq.check_address_format(df2, "Employee_details", should_halt)
+
+    halt_referential_integrity = "referential_integrity" in ctx.halt_checks
+    dq.check_referential_integrity(
+        df1, ["id"], df3, ["caller_id"], "Sales_details", halt_referential_integrity
+    )

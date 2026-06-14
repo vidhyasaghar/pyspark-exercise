@@ -8,7 +8,7 @@ from typing import Any, Optional
 from pyspark.sql import SparkSession
 
 LOG_DIR = Path("logs")
-LOG_FILE = LOG_DIR / "sales_data.log"
+LOG_FILE = LOG_DIR / "eternalsalesdata.log"
 MAX_BYTES = 5 * 1024 * 1024  # 5 MB
 BACKUP_COUNT = 3
 
@@ -152,7 +152,11 @@ def get_logger(
         return logger
 
     app_name = spark_session.sparkContext.appName if spark_session else None
-    fmt = f"%(asctime)s | %(levelname)s | %(name)s | [{app_name}] | %(message)s" if app_name else "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+    fmt = (
+        f"%(asctime)s | %(levelname)s | %(name)s | [{app_name}] | %(message)s"
+        if app_name
+        else "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+    )
     formatter = logging.Formatter(fmt, datefmt="%Y-%m-%d %H:%M:%S")
 
     if not logger.hasHandlers():

@@ -9,7 +9,7 @@ Intermediate data quality checks for Sales data analysis pipeline.
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
-from eternalsalesData.utils.logger_config import get_logger
+from eternalsalesdata.utils.logger_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -40,22 +40,18 @@ def check_referential_integrity(  # pylint: disable=too-many-arguments
     :type halt_on_failure: bool
     :return: ``True`` when every child row has a matching parent row.
     :rtype: bool
-    :raises RuntimeError: When *halt_on_failure* is ``True`` and orphans exist,
-        or when the check itself fails to run.
+    :raises ValueError: When a key column is missing from its respective DataFrame.
+    :raises RuntimeError: When *halt_on_failure* is ``True`` and orphans exist.
     """
-    try:
-        orphan_count = (
-            child_table.select(*child_keys).subtract(parent_table.select(*parent_keys)).count()
-        )
-    except Exception as e:  # pylint: disable=broad-except
-        logger.error(
-            "[%s] Error occurred while checking referential integrity: %s",
-            dataset_name,
-            e,
-        )
-        raise RuntimeError(
-            f"Error occurred while checking referential integrity in {dataset_name}: {e}"
-        ) from e
+    missing_parent = [k for k in parent_keys if k not in parent_table.columns]
+    if missing_parent:
+        raise ValueError(f"Column(s) not found in parent_table: {', '.join(missing_parent)}")
+    missing_child = [k for k in child_keys if k not in child_table.columns]
+    if missing_child:
+        raise ValueError(f"Column(s) not found in child_table: {', '.join(missing_child)}")
+    orphan_count = (
+        child_table.select(*child_keys).subtract(parent_table.select(*parent_keys)).count()
+    )
     if orphan_count > 0:
         logger.warning(
             "[%s] Referential integrity check failed: %d row(s) in child table have no match in parent table.",
@@ -85,20 +81,13 @@ def check_calls_successful_gt_made(
     :type halt_on_failure: bool
     :return: ``True`` when no violations are found.
     :rtype: bool
-    :raises RuntimeError: When *halt_on_failure* is ``True`` and violations exist,
-        or when the check itself fails to run.
+    :raises ValueError: When ``calls_successful`` or ``calls_made`` is not in the DataFrame.
+    :raises RuntimeError: When *halt_on_failure* is ``True`` and violations exist.
     """
-    try:
-        violations = df.filter(F.col("calls_successful") > F.col("calls_made")).count()
-    except Exception as e:
-        logger.error(
-            "[%s] Error occurred while checking calls_successful <= calls_made: %s",
-            dataset_name,
-            e,
-        )
-        raise RuntimeError(
-            f"Error occurred while checking dependent attributes in {dataset_name}: {e}"
-        ) from e
+    for col in ("calls_successful", "calls_made"):
+        if col not in df.columns:
+            raise ValueError(f"Column '{col}' not found in DataFrame")
+    violations = df.filter(F.col("calls_successful") > F.col("calls_made")).count()
     if violations > 0:
         logger.warning(
             "[%s] %d row(s) where calls_successful > calls_made.",
@@ -128,21 +117,13 @@ def check_address_format(df: DataFrame, dataset_name: str, halt_on_failure: bool
     :type halt_on_failure: bool
     :return: ``True`` when all addresses match the expected format.
     :rtype: bool
-    :raises RuntimeError: When *halt_on_failure* is ``True`` and invalid addresses exist,
-        or when the check itself fails to run.
+    :raises ValueError: When the ``address`` column is not in the DataFrame.
+    :raises RuntimeError: When *halt_on_failure* is ``True`` and invalid addresses exist.
     """
-    pattern = r"^[A-Za-z0-9-\s]+, \d+(?:-\d+)?, \d{4} [A-Z]{2}$"
-    try:
-        invalid = df.filter(~F.col("address").rlike(pattern)).count()
-    except Exception as e:
-        logger.error(
-            "[%s] Error occurred while checking address format: %s",
-            dataset_name,
-            e,
-        )
-        raise RuntimeError(
-            f"Error occurred while checking address format in {dataset_name}: {e}"
-        ) from e
+    if "address" not in df.columns:
+        raise ValueError("Column 'address' not found in DataFrame")
+    pattern = r"^[A-Za-z0-9-\s]+, \d+, \d{4} [A-Z]{2}$"
+    invalid = df.filter(F.col("address").isNull() | ~F.col("address").rlike(pattern)).count()
     if invalid > 0:
         logger.warning(
             "[%s] %d address(es) do not match the expected format.",

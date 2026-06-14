@@ -1,7 +1,7 @@
 """Data quality checks package."""
 
-from eternalsalesData.dq_checks.dq_basic import *
-from eternalsalesData.dq_checks.dq_intermediate import *
+from eternalsalesdata.dq_checks.dq_basic import *
+from eternalsalesdata.dq_checks.dq_intermediate import *
 
 __all__ = [
     "check_row_count",
