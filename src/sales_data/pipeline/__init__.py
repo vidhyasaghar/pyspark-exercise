@@ -1,1 +1,0 @@
-"""Sales data pipeline package."""
