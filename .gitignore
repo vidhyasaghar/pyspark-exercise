@@ -6,4 +6,4 @@ __pycache__/
 .vs
 logs
 output
-src/sales_data/pipeline/test.ipynb
+src/eternalsalesData/pipeline/test.ipynb
