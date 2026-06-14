@@ -6,4 +6,4 @@ __pycache__/
 .vs
 logs
 output
-src/eternalsalesData/pipeline/test.ipynb
+src/eternalsalesdata/pipeline/test.ipynb
