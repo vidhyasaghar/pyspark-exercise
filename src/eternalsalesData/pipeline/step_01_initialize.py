@@ -1,7 +1,7 @@
 """Initialize step: validate input datasets and output directory."""
 
-from eternalsalesData.pipeline.context import PipelineContext, ExecutionStatus
-from eternalsalesData.utils.logger_config import get_logger
+from eternalsalesdata.pipeline.context import PipelineContext, ExecutionStatus
+from eternalsalesdata.utils.logger_config import get_logger
 
 logger = get_logger(__name__)
 

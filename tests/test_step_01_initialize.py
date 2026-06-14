@@ -1,12 +1,12 @@
-"""Tests for sales_data.pipeline.step_01_initialize."""
+"""Tests for eternalsalesdata.pipeline.step_01_initialize."""
 
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 
-from sales_data.pipeline.context import ExecutionStatus, PipelineContext
-from sales_data.pipeline.step_01_initialize import run
+from eternalsalesdata.pipeline.context import ExecutionStatus, PipelineContext
+from eternalsalesdata.pipeline.step_01_initialize import run
 
 
 def _csv(tmp_path: Path, name: str) -> Path:

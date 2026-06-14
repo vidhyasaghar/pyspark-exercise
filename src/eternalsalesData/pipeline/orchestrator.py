@@ -3,11 +3,11 @@
 import argparse
 from pathlib import Path
 
-from eternalsalesData.utils.logger_config import get_logger
-from eternalsalesData.pipeline.context import PipelineContext
-from eternalsalesData.pipeline import step_01_initialize as initialize
-from eternalsalesData.pipeline import step_02_check_dq as dq_check
-from eternalsalesData.pipeline import step_03_generate_report as generate_report
+from eternalsalesdata.utils.logger_config import get_logger
+from eternalsalesdata.pipeline.context import PipelineContext
+from eternalsalesdata.pipeline import step_01_initialize as initialize
+from eternalsalesdata.pipeline import step_02_check_dq as dq_check
+from eternalsalesdata.pipeline import step_03_generate_report as generate_report
 
 logger = get_logger(__name__)
 

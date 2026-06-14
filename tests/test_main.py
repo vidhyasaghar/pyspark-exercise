@@ -1,10 +1,10 @@
-"""Tests for sales_data.main."""
+"""Tests for eternalsalesdata.main."""
 
 from unittest.mock import MagicMock, patch
 
-from sales_data.main import _DQ_CHECKS, main
+from eternalsalesdata.main import _DQ_CHECKS, main
 
-_PATCH_ORCHESTRATOR = "sales_data.main.Orchestrator"
+_PATCH_ORCHESTRATOR = "eternalsalesdata.main.Orchestrator"
 _BASE_ARGV = ["sales-data", "/fake/ds1.csv", "/fake/ds2.csv", "/fake/ds3.csv", "/fake/out"]
 
 

@@ -3,8 +3,8 @@
 import argparse
 from pathlib import Path
 
-from eternalsalesData.pipeline.orchestrator import Orchestrator
-from eternalsalesData.utils.logger_config import get_logger
+from eternalsalesdata.pipeline.orchestrator import Orchestrator
+from eternalsalesdata.utils.logger_config import get_logger
 
 logger = get_logger(__name__)
 
