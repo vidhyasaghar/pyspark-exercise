@@ -3,6 +3,7 @@
 __pycache__/
 .mypy_cache/
 .vscode/
+.vs
 logs
 output
 src/sales_data/pipeline/test.ipynb

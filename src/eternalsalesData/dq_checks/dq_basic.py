@@ -1,5 +1,5 @@
 """
-Data quality checks for Sales data analysis pipeline.
+Basic data quality checks for Sales data analysis pipeline.
 
 :description: Common validations applied to each dataset
     before any processing begins. Warnings are logged for every issue found.
@@ -9,12 +9,14 @@ Data quality checks for Sales data analysis pipeline.
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
-from sales_data.utils.logger_config import get_logger
+from eternalsalesData.utils.logger_config import get_logger
 
 logger = get_logger(__name__)
 
 
-def check_row_count(df: DataFrame, expected: int, dataset_name: str, halt_on_failure: bool = False) -> bool:
+def check_row_count(
+    df: DataFrame, expected: int, dataset_name: str, halt_on_failure: bool = False
+) -> bool:
     """
     Verify that *df* contains *expected* rows.
 
@@ -44,7 +46,9 @@ def check_row_count(df: DataFrame, expected: int, dataset_name: str, halt_on_fai
     return True
 
 
-def check_col_non_null(df: DataFrame, dataset_name: str, column_names: list[str], halt_on_failure: bool = False) -> bool:
+def check_col_non_null(
+    df: DataFrame, dataset_name: str, column_names: list[str], halt_on_failure: bool = False
+) -> bool:
     """
     Ensure the specified columns have no nulls.
 
@@ -79,13 +83,17 @@ def check_col_non_null(df: DataFrame, dataset_name: str, column_names: list[str]
             errors.append(col)
             ok = False
     if errors and halt_on_failure:
-        raise RuntimeError(f"Null values found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details.")
+        raise RuntimeError(
+            f"Null values found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details."
+        )
     if ok:
         logger.info("[%s] %s non-null: OK.", dataset_name, ", ".join(column_names))
     return ok
 
 
-def check_col_unique(df: DataFrame, dataset_name: str, column_names: list[str], halt_on_failure: bool = False) -> bool:
+def check_col_unique(
+    df: DataFrame, dataset_name: str, column_names: list[str], halt_on_failure: bool = False
+) -> bool:
     """
     Ensure the specified columns have no duplicates.
 
@@ -127,14 +135,18 @@ def check_col_unique(df: DataFrame, dataset_name: str, column_names: list[str], 
             errors.append(col)
             ok = False
     if errors and halt_on_failure:
-        raise RuntimeError(f"Duplicates found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details.")
+        raise RuntimeError(
+            f"Duplicates found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details."
+        )
 
     if ok:
         logger.info("[%s] All columns unique: OK.", dataset_name)
     return ok
 
 
-def check_col_non_negative(df: DataFrame, columns: list[str], dataset_name: str, halt_on_failure: bool = False) -> bool:
+def check_col_non_negative(
+    df: DataFrame, columns: list[str], dataset_name: str, halt_on_failure: bool = False
+) -> bool:
     """
     Ensure numeric *columns* contain no negative values.
 
@@ -174,60 +186,11 @@ def check_col_non_negative(df: DataFrame, columns: list[str], dataset_name: str,
             errors.append(col)
             ok = False
     if errors and halt_on_failure:
-        raise RuntimeError(f"Negative values found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details.")
+        raise RuntimeError(
+            f"Negative values found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details."
+        )
 
     if ok:
         logger.info("[%s] All specified columns non-negative: OK.", dataset_name)
 
     return ok
-
-
-def check_referential_integrity(  # pylint: disable=too-many-arguments
-    parent_table: DataFrame,
-    parent_keys: list[str],
-    child_table: DataFrame,
-    child_keys: list[str],
-    dataset_name: str,
-    halt_on_failure: bool = False,
-) -> bool:
-    """
-    Verify every row in *child_table* has a matching row in *parent_table*
-    on the given *join_keys*.
-
-    :param parent_table: The parent dataset containing the reference values.
-    :type parent_table: pyspark.sql.DataFrame
-    :param child_table: The child dataset containing the values to check.
-    :type child_table: pyspark.sql.DataFrame
-    :param parent_keys: List of columns in the parent table to join on.
-    :type parent_keys: list[str]
-    :param child_keys: List of columns in the child table to join on.
-    :type child_keys: list[str]
-    :param dataset_name: Label used in log messages.
-    :type dataset_name: str
-    :param halt_on_failure: Raise ``RuntimeError`` on failure when ``True``.
-    :type halt_on_failure: bool
-    :return: ``True`` when every child row has a matching parent row.
-    :rtype: bool
-    :raises RuntimeError: When *halt_on_failure* is ``True`` and orphans exist,
-        or when the check itself fails to run.
-    """
-    try:
-        orphan_count = child_table.select(*child_keys).subtract(parent_table.select(*parent_keys)).count()
-    except Exception as e:  # pylint: disable=broad-except
-        logger.error(
-            "[%s] Error occurred while checking referential integrity: %s",
-            dataset_name,
-            e,
-        )
-        raise RuntimeError(f"Error occurred while checking referential integrity in {dataset_name}: {e}") from e
-    if orphan_count > 0:
-        logger.warning(
-            "[%s] Referential integrity check failed: %d row(s) in child table have no match in parent table.",
-            dataset_name,
-            orphan_count,
-        )
-        if halt_on_failure:
-            raise RuntimeError(f"Referential integrity failed in {dataset_name}: {orphan_count} orphan row(s).")
-        return False
-    logger.info("[%s] Referential integrity: All rows matched: OK.", dataset_name)
-    return True
