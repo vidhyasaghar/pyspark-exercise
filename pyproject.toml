@@ -1,7 +1,7 @@
 [project]
 name = "EternalSalesData"
 version = "0.1.0"
-description = "EternalTeleSales data analysis"
+description = "EternalTele Sales data analysis"
 readme = "README.md"
 authors = [
     { name = "Vidhyasaghar Selvarajan", email = "vidhyasagharnsit@gmail.com" }
@@ -16,7 +16,7 @@ requires = ["uv_build>=0.11.19,<0.12.0"]
 build-backend = "uv_build"
 
 [project.scripts]
-sales-data = "eternalsalesData.main:main"
+sales-data = "eternalsalesdata.main:main"
 
 [project.optional-dependencies]
 dev = [
