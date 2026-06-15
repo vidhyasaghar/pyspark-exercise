@@ -201,6 +201,32 @@ def test_transform_marketing_address_info_address_parsing(spark: SparkSession) -
     assert row.zip_code == "1234 AB"
 
 
+def test_transform_marketing_address_info_zip_at_start(spark: SparkSession) -> None:
+    # Real-data variant: "DDDD XX, City" — zip precedes the city name
+    df1 = spark.createDataFrame([(1, "Alice", "Marketing")], ["id", "name", "area"])
+    df2 = spark.createDataFrame([(1, "2588 VD, Kropswolde")], ["id", "address"])
+    df3 = spark.range(0)
+
+    result = transform_marketing_address_info(df1, df2, df3)
+
+    row = result.first()
+    assert row.address == "Kropswolde"
+    assert row.zip_code == "2588 VD"
+
+
+def test_transform_marketing_address_info_zip_in_middle(spark: SparkSession) -> None:
+    # Real-data variant: "Street HouseNumber, DDDD XX, City"
+    df1 = spark.createDataFrame([(1, "Alice", "Marketing")], ["id", "name", "area"])
+    df2 = spark.createDataFrame([(1, "Lindehof 5, 4133 HB, Nederhemert")], ["id", "address"])
+    df3 = spark.range(0)
+
+    result = transform_marketing_address_info(df1, df2, df3)
+
+    row = result.first()
+    assert row.address == "Lindehof 5, Nederhemert"
+    assert row.zip_code == "4133 HB"
+
+
 def test_transform_marketing_address_info_empty_when_no_marketing_employees(
     spark: SparkSession,
 ) -> None:
@@ -442,6 +468,28 @@ def test_transform_best_salesperson_per_country_winner_and_output(spark: SparkSe
     assert_df_equality(result, expected, ignore_nullable=True)
 
 
+def test_transform_best_salesperson_per_country_same_name_different_id_not_merged(
+    spark: SparkSession,
+) -> None:
+    # Two employees share the name "Alice" but have different ids — they must not be merged.
+    df2 = spark.createDataFrame(
+        [(1, "Alice", 500.0), (2, "Alice", 300.0)],
+        ["id", "name", "sales_amount"],
+    )
+    df3 = spark.createDataFrame(
+        [(1, "Netherlands", 10), (2, "Netherlands", 20)],
+        ["caller_id", "country", "quantity"],
+    )
+    df1 = spark.range(0)
+
+    result = transform_best_salesperson_per_country(df1, df2, df3)
+
+    # id=2 has total_quantity=20, wins. id=1 has total_quantity=10, loses.
+    assert result.count() == 1
+    winner = result.first()
+    assert winner.total_quantity == "20"
+
+
 def test_transform_best_salesperson_per_country_empty_when_no_join_matches(
     spark: SparkSession,
 ) -> None:
@@ -459,7 +507,7 @@ def test_transform_best_salesperson_per_country_empty_when_no_join_matches(
 # ---------------------------------------------------------------------------
 
 
-def test_run_sets_success_status_when_all_transforms_pass() -> None:
+def test_run_sets_report_success_and_does_not_touch_dq_status() -> None:
     ctx = _make_ctx()
     mock_df = MagicMock()
     stub = MagicMock(return_value=mock_df)
@@ -473,31 +521,38 @@ def test_run_sets_success_status_when_all_transforms_pass() -> None:
     ):
         run(ctx)
 
-    assert ctx.dq_status == ExecutionStatus.SUCCESS
     assert ctx.report_statuses["report_a"] == ExecutionStatus.SUCCESS
+    # run() must never write dq_status
+    from eternalsalesdata.pipeline.context import ExecutionStatus as ES
+
+    assert ctx.dq_status == ES.PENDING
 
 
-def test_run_transform_failure_sets_failed_reraises_and_adds_error() -> None:
+def test_run_transform_failure_records_failed_continues_loop_no_raise() -> None:
     ctx = _make_ctx()
     mock_df = MagicMock()
-    stub = MagicMock(side_effect=RuntimeError("transform error"))
+    stub_fail = MagicMock(side_effect=RuntimeError("transform error"))
+    stub_ok = MagicMock(return_value=mock_df)
 
     with (
         patch(_PATCH_GET_SPARK),
         patch(_PATCH_READ_CSV, return_value=mock_df),
         patch(_PATCH_WRITE_CSV),
-        patch(_PATCH_TRANSFORMS, {stub: "report_b"}),
+        patch(_PATCH_TRANSFORMS, {stub_fail: "report_b", stub_ok: "report_c"}),
         patch.object(Path, "mkdir"),
-        pytest.raises(RuntimeError),
     ):
-        run(ctx)
+        result = run(ctx)  # must NOT raise
 
-    assert ctx.dq_status == ExecutionStatus.FAILED
+    assert result is ctx
     assert ctx.report_statuses.get("report_b") == ExecutionStatus.FAILED
-    assert len(ctx.errors) > 0
+    assert ctx.report_statuses.get("report_c") == ExecutionStatus.SUCCESS
+    assert len(ctx.errors) == 1  # exactly one error per failing report
+    assert "report_b" in ctx.errors[0]
+    # dq_status untouched
+    assert ctx.dq_status == ExecutionStatus.PENDING
 
 
-def test_run_sets_failed_status_when_spark_session_raises() -> None:
+def test_run_propagates_spark_init_failure_without_touching_dq_status() -> None:
     ctx = _make_ctx()
 
     with (
@@ -506,4 +561,5 @@ def test_run_sets_failed_status_when_spark_session_raises() -> None:
     ):
         run(ctx)
 
-    assert ctx.dq_status == ExecutionStatus.FAILED
+    # dq_status is owned by step_02, not step_03
+    assert ctx.dq_status == ExecutionStatus.PENDING

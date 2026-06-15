@@ -12,6 +12,7 @@ _DQ_CHECKS = {
     "row_count",
     "col_unique",
     "col_non_null",
+    "col_non_negative",
     "referential_integrity",
     "calls_successful_gt_made",
     "address_format",
@@ -61,8 +62,8 @@ def main() -> int:
         type=str,
         default="",
         help="Comma-separated list of specific DQ checks to halt on "
-        "(row_count, col_unique, col_non_null, referential_integrity, "
-        "calls_successful_gt_made, address_format)",
+        "(row_count, col_unique, col_non_null, col_non_negative, "
+        "referential_integrity, calls_successful_gt_made, address_format)",
     )
     args = parser.parse_args()
 

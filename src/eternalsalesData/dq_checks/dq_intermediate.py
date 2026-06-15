@@ -54,7 +54,8 @@ def check_referential_integrity(  # pylint: disable=too-many-arguments
     )
     if orphan_count > 0:
         logger.warning(
-            "[%s] Referential integrity check failed: %d row(s) in child table have no match in parent table.",
+            "[%s] Referential integrity check failed: %d row(s) in child table"
+            " have no match in parent table.",
             dataset_name,
             orphan_count,
         )

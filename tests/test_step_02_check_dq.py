@@ -6,7 +6,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from eternalsalesdata.pipeline.context import ExecutionStatus, PipelineContext
-from eternalsalesdata.pipeline.step_02_check_dq import run, run_basic_checks, run_intermediate_checks
+from eternalsalesdata.pipeline.step_02_check_dq import (
+    run,
+    run_basic_checks,
+    run_intermediate_checks,
+)
 
 _PATCH_GET_SPARK = "eternalsalesdata.pipeline.step_02_check_dq.spark_session.get_spark_session"
 _PATCH_READ_CSV = "eternalsalesdata.pipeline.step_02_check_dq.spark_utils.read_csv_with_header"
@@ -228,8 +232,8 @@ def test_basic_checks_non_negative_columns_per_dataset() -> None:
         run_basic_checks(df1, df2, df3, ctx)
 
     assert mock_dq.check_col_non_negative.call_count == 3
-    # args: (df, columns, dataset_name, halt)
-    df_to_cols = {c.args[0]: c.args[1] for c in mock_dq.check_col_non_negative.call_args_list}
+    # args: (df, dataset_name, columns, halt)
+    df_to_cols = {c.args[0]: c.args[2] for c in mock_dq.check_col_non_negative.call_args_list}
     assert df_to_cols[df1] == ["calls_made", "calls_successful"]
     assert df_to_cols[df2] == ["sales_amount"]
     assert df_to_cols[df3] == ["quantity", "age"]
@@ -292,7 +296,9 @@ def test_intermediate_checks_referential_integrity_halt() -> None:
 
 
 def test_intermediate_checks_all_halt() -> None:
-    ctx = _make_ctx(halt_checks={"calls_successful_gt_made", "address_format", "referential_integrity"})
+    ctx = _make_ctx(
+        halt_checks={"calls_successful_gt_made", "address_format", "referential_integrity"}
+    )
     df1, df2, df3 = MagicMock(), MagicMock(), MagicMock()
 
     with patch(_PATCH_DQ) as mock_dq:
@@ -329,8 +335,8 @@ def test_intermediate_checks_referential_integrity_caller_id_against_dataset_one
     assert mock_dq.check_referential_integrity.call_count == 1
     call = mock_dq.check_referential_integrity.call_args
     # args: (parent_table, parent_keys, child_table, child_keys, dataset_name, halt)
-    assert call.args[0] is df1          # parent = Employee_calls
-    assert call.args[1] == ["id"]       # parent key
-    assert call.args[2] is df3          # child = Sales_details
+    assert call.args[0] is df1  # parent = Employee_calls
+    assert call.args[1] == ["id"]  # parent key
+    assert call.args[2] is df3  # child = Sales_details
     assert call.args[3] == ["caller_id"]  # child key
     assert call.args[4] == "Sales_details"

@@ -29,13 +29,20 @@ def test_check_referential_integrity_halt_true_raises(spark: SparkSession) -> No
     parent = spark.createDataFrame([(1,), (2,)], ["id"])
     child = spark.createDataFrame([(1,), (99,)], ["caller_id"])
     with pytest.raises(RuntimeError, match=DATASET):
-        check_referential_integrity(parent, ["id"], child, ["caller_id"], DATASET, halt_on_failure=True)
+        check_referential_integrity(
+            parent, ["id"], child, ["caller_id"], DATASET, halt_on_failure=True
+        )
 
 
 def test_check_referential_integrity_halt_false_returns_false(spark: SparkSession) -> None:
     parent = spark.createDataFrame([(1,), (2,)], ["id"])
     child = spark.createDataFrame([(1,), (99,)], ["caller_id"])
-    assert check_referential_integrity(parent, ["id"], child, ["caller_id"], DATASET, halt_on_failure=False) is False
+    assert (
+        check_referential_integrity(
+            parent, ["id"], child, ["caller_id"], DATASET, halt_on_failure=False
+        )
+        is False
+    )
 
 
 def test_check_referential_integrity_halt_none_returns_false(spark: SparkSession) -> None:
@@ -47,7 +54,7 @@ def test_check_referential_integrity_halt_none_returns_false(spark: SparkSession
 @pytest.mark.parametrize(
     "child_data",
     [
-        [(1,), (99,)],    # one orphan, one matched
+        [(1,), (99,)],  # one orphan, one matched
         [(99,), (100,)],  # all rows are orphans
     ],
     ids=["partial-orphans", "all-orphans"],
@@ -59,11 +66,18 @@ def test_check_referential_integrity_orphans(
     child = spark.createDataFrame(child_data, ["caller_id"])
 
     # Return value
-    assert check_referential_integrity(parent, ["id"], child, ["caller_id"], DATASET, halt_on_failure=False) is False
+    assert (
+        check_referential_integrity(
+            parent, ["id"], child, ["caller_id"], DATASET, halt_on_failure=False
+        )
+        is False
+    )
 
     # Error on halt
     with pytest.raises(RuntimeError, match=DATASET):
-        check_referential_integrity(parent, ["id"], child, ["caller_id"], DATASET, halt_on_failure=True)
+        check_referential_integrity(
+            parent, ["id"], child, ["caller_id"], DATASET, halt_on_failure=True
+        )
 
 
 def test_check_referential_integrity_empty_child_passes(spark: SparkSession) -> None:
@@ -95,8 +109,8 @@ def test_check_referential_integrity_missing_child_key_raises(spark: SparkSessio
     "data",
     [
         [(5, 10), (7, 7), (0, 1)],  # successful < made
-        [(10, 10), (5, 5)],          # equal values are allowed
-        [(0, 0), (0, 5)],            # zero successful
+        [(10, 10), (5, 5)],  # equal values are allowed
+        [(0, 0), (0, 5)],  # zero successful
     ],
     ids=["normal", "equal-values", "zero-successful"],
 )
@@ -126,9 +140,9 @@ def test_check_calls_successful_gt_made_halt_none_returns_false(spark: SparkSess
 @pytest.mark.parametrize(
     "data",
     [
-        [(5, 10), (8, 6)],           # one violation, one clean row
-        [(9, 5), (7, 3), (2, 10)],   # multiple violations
-        [(10, 5), (8, 3)],           # every row violates
+        [(5, 10), (8, 6)],  # one violation, one clean row
+        [(9, 5), (7, 3), (2, 10)],  # multiple violations
+        [(10, 5), (8, 3)],  # every row violates
     ],
     ids=["single-violation", "multiple-violations", "all-violate"],
 )
@@ -180,8 +194,8 @@ def test_check_calls_successful_gt_made_missing_calls_made_raises(spark: SparkSe
     "address",
     [
         "Main Street, 10, 1234 AB",  # simple
-        "Oak-Avenue, 5, 4321 XY",    # hyphenated street name
-        "1st Avenue, 7, 9876 ZZ",    # alphanumeric street name
+        "Oak-Avenue, 5, 4321 XY",  # hyphenated street name
+        "1st Avenue, 7, 9876 ZZ",  # alphanumeric street name
     ],
     ids=["simple", "hyphenated-street", "alphanumeric-street"],
 )
@@ -210,13 +224,13 @@ def test_check_address_format_halt_none_returns_false(spark: SparkSession) -> No
     "address",
     [
         "Main Street, 12-14, 1234 AB",  # range house number — not a non-negative integer
-        "Main Street, 10",              # missing zip code
-        "Main Street, 10, 12345 AB",    # five-digit zip (must be four)
-        "Main Street, 10, 1234 ab",     # lowercase zip suffix (must be uppercase)
-        "Main Street, 10, 1234 A",      # single letter zip suffix (must be two)
-        "Main Street, 10, 1234 ABC",    # three letter zip suffix (must be two)
-        "",                             # empty string
-        None,                           # null address
+        "Main Street, 10",  # missing zip code
+        "Main Street, 10, 12345 AB",  # five-digit zip (must be four)
+        "Main Street, 10, 1234 ab",  # lowercase zip suffix (must be uppercase)
+        "Main Street, 10, 1234 A",  # single letter zip suffix (must be two)
+        "Main Street, 10, 1234 ABC",  # three letter zip suffix (must be two)
+        "",  # empty string
+        None,  # null address
     ],
     ids=[
         "range-number",
@@ -229,9 +243,7 @@ def test_check_address_format_halt_none_returns_false(spark: SparkSession) -> No
         "null",
     ],
 )
-def test_check_address_format_invalid_patterns(
-    spark: SparkSession, address: str | None
-) -> None:
+def test_check_address_format_invalid_patterns(spark: SparkSession, address: str | None) -> None:
     schema = StructType([StructField("address", StringType(), True)])
     df = spark.createDataFrame([(address,)], schema)
     assert check_address_format(df, DATASET) is False
