@@ -3,8 +3,8 @@
 import argparse
 from pathlib import Path
 
-from sales_data.pipeline.orchestrator import Orchestrator
-from sales_data.utils.logger_config import get_logger
+from eternalsalesdata.pipeline.orchestrator import Orchestrator
+from eternalsalesdata.utils.logger_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -12,6 +12,7 @@ _DQ_CHECKS = {
     "row_count",
     "col_unique",
     "col_non_null",
+    "col_non_negative",
     "referential_integrity",
     "calls_successful_gt_made",
     "address_format",
@@ -60,7 +61,9 @@ def main() -> int:
         "--halt",
         type=str,
         default="",
-        help="Comma-separated list of specific DQ checks to halt on " "(row_count, col_unique, col_non_null, referential_integrity, " "calls_successful_gt_made, address_format)",
+        help="Comma-separated list of specific DQ checks to halt on "
+        "(row_count, col_unique, col_non_null, col_non_negative, "
+        "referential_integrity, calls_successful_gt_made, address_format)",
     )
     args = parser.parse_args()
 
