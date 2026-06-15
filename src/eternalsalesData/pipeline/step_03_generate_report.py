@@ -1,7 +1,6 @@
 """Report generation step: runs all registered transforms and writes CSVs."""
 
 from pathlib import Path
-from functools import wraps
 from pyspark.sql import DataFrame, Window
 from pyspark.sql import functions as F
 from eternalsalesdata.pipeline.context import ExecutionStatus, PipelineContext
@@ -38,9 +37,9 @@ def transform_it_data(df1: DataFrame, df2: DataFrame, df3: DataFrame) -> DataFra
     # pylint: disable=unused-argument
     """Return the top 100 IT department employees ordered by sales amount descending.
 
-    :param df1: Employee_details DataFrame.
+    :param df1: Employee_calls DataFrame (area, calls columns).
     :type df1: DataFrame
-    :param df2: Employee_calls DataFrame.
+    :param df2: Employee_details DataFrame (sales_amount column).
     :type df2: DataFrame
     :param df3: Sales_details DataFrame (unused).
     :type df3: DataFrame
@@ -62,9 +61,9 @@ def transform_marketing_address_info(df1: DataFrame, df2: DataFrame, df3: DataFr
     # pylint: disable=unused-argument
     """Extract name, address (without zip), and zip code for Marketing department employees.
 
-    :param df1: Employee_details DataFrame.
+    :param df1: Employee_calls DataFrame (area, name columns).
     :type df1: DataFrame
-    :param df2: Employee_calls DataFrame containing address column.
+    :param df2: Employee_details DataFrame (address column).
     :type df2: DataFrame
     :param df3: Sales_details DataFrame (unused).
     :type df3: DataFrame
@@ -75,7 +74,16 @@ def transform_marketing_address_info(df1: DataFrame, df2: DataFrame, df3: DataFr
         df1.join(df2, on="id", how="inner")
         .filter(F.col("area") == "Marketing")
         .withColumn("zip_code", F.regexp_extract(F.col("address"), r"(\d{4} [A-Z]{2})", 1))
-        .withColumn("address", F.regexp_replace(F.col("address"), r",\s*\d{4} [A-Z]{2}$", ""))
+        .withColumn(
+            "address",
+            F.trim(
+                F.regexp_replace(
+                    F.regexp_replace(F.col("address"), r"\d{4} [A-Z]{2},?\s*", ""),
+                    r"^,\s*|,\s*$",
+                    "",
+                )
+            ),
+        )
         .select("name", "address", "zip_code")
     )
     return result
@@ -86,9 +94,9 @@ def transform_department_breakdown(df1: DataFrame, df2: DataFrame, df3: DataFram
     # pylint: disable=unused-argument
     """Aggregate total sales and call success rate per department.
 
-    :param df1: Employee_details DataFrame.
+    :param df1: Employee_calls DataFrame (area, calls_successful, calls_made columns).
     :type df1: DataFrame
-    :param df2: Employee_calls DataFrame.
+    :param df2: Employee_details DataFrame (sales_amount column).
     :type df2: DataFrame
     :param df3: Sales_details DataFrame (unused).
     :type df3: DataFrame
@@ -118,9 +126,9 @@ def transform_best_performer_per_department(
     # pylint: disable=unused-argument
     """Return the top 3 performers per department with a call success rate above 75%.
 
-    :param df1: Employee_details DataFrame.
+    :param df1: Employee_calls DataFrame (area, calls_successful, calls_made columns).
     :type df1: DataFrame
-    :param df2: Employee_calls DataFrame.
+    :param df2: Employee_details DataFrame (name, sales_amount columns).
     :type df2: DataFrame
     :param df3: Sales_details DataFrame (unused).
     :type df3: DataFrame
@@ -156,9 +164,9 @@ def transform_top_3_sold_products_nl(df1: DataFrame, df2: DataFrame, df3: DataFr
     # pylint: disable=unused-argument
     """Return the top 3 most-sold products per department for Netherlands sales.
 
-    :param df1: Employee_details DataFrame.
+    :param df1: Employee_calls DataFrame (area column; joined on id == caller_id).
     :type df1: DataFrame
-    :param df2: Employee_calls DataFrame (unused).
+    :param df2: Employee_details DataFrame (unused).
     :type df2: DataFrame
     :param df3: Sales_details DataFrame with country, product_sold, and quantity columns.
     :type df3: DataFrame
@@ -178,7 +186,7 @@ def transform_top_3_sold_products_nl(df1: DataFrame, df2: DataFrame, df3: DataFr
         .select(
             "area",
             "product_sold",
-            F.format_string("%,2d", F.col("total_quantity")).alias("total_quantity"),
+            F.format_string("%,d", F.col("total_quantity")).alias("total_quantity"),
             "rank",
         )
     )
@@ -192,9 +200,9 @@ def transform_best_salesperson_per_country(
     # pylint: disable=unused-argument
     """Return the best salesperson per country ranked by total quantity sold.
 
-    :param df1: Employee_details DataFrame (unused).
+    :param df1: Employee_calls DataFrame (unused).
     :type df1: DataFrame
-    :param df2: Employee_calls DataFrame.
+    :param df2: Employee_details DataFrame (name, sales_amount columns).
     :type df2: DataFrame
     :param df3: Sales_details DataFrame with country, quantity, and sales_amount columns.
     :type df3: DataFrame
@@ -203,7 +211,7 @@ def transform_best_salesperson_per_country(
     """
     result = (
         df2.join(df3, df2.id == df3.caller_id, how="inner")
-        .groupBy("country", "name", "sales_amount")
+        .groupBy(df2["id"], "country", "name", "sales_amount")
         .agg(F.sum("quantity").alias("total_quantity"))
         .withColumn(
             "rank",
@@ -234,44 +242,28 @@ def run(ctx: PipelineContext) -> PipelineContext:
     :type ctx: PipelineContext
     :returns: Updated context with per-report statuses in ``report_statuses``.
     :rtype: PipelineContext
-    :raises RuntimeError: If any individual transform raises an exception.
+    :raises Exception: If Spark initialisation or dataset reads fail (not per-report failures).
     """
     logger.info("=== Generate Reports ===")
 
-    try:
-        spark = spark_session.get_spark_session("Report Generation")
+    spark = spark_session.get_spark_session("Report Generation")
+    df1 = spark_utils.read_csv_with_header(spark, str(ctx.dataset_one))
+    df2 = spark_utils.read_csv_with_header(spark, str(ctx.dataset_two))
+    df3 = spark_utils.read_csv_with_header(spark, str(ctx.dataset_three))
 
-        # Read datasets once
-        df1 = spark_utils.read_csv_with_header(spark, str(ctx.dataset_one))
-        df2 = spark_utils.read_csv_with_header(spark, str(ctx.dataset_two))
-        df3 = spark_utils.read_csv_with_header(spark, str(ctx.dataset_three))
+    for transform_func, output_dir in TRANSFORMS.items():
+        try:
+            logger.info("Generating for : %s", output_dir)
+            result_df = transform_func(df1, df2, df3)
+            output_path = ctx.output_dir / output_dir
+            Path(output_path).mkdir(parents=True, exist_ok=True)
+            spark_utils.write_df_to_csv(result_df, str(output_path))
+            ctx.report_statuses[output_dir] = ExecutionStatus.SUCCESS
+            logger.info("%s saved to %s", output_dir, output_path)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("%s failed: %s", output_dir, e)
+            ctx.report_statuses[output_dir] = ExecutionStatus.FAILED
+            ctx.add_error(f"{output_dir}: {e}")
 
-        # Execute all registered transforms
-        for transform_func, output_dir in TRANSFORMS.items():
-            try:
-                logger.info("Generating for : %s", output_dir)
-
-                result_df = transform_func(df1, df2, df3)
-                output_path = ctx.output_dir / output_dir
-
-                Path(output_path).mkdir(parents=True, exist_ok=True)
-                spark_utils.write_df_to_csv(result_df, str(output_path))
-
-                ctx.report_statuses[output_dir] = ExecutionStatus.SUCCESS
-                logger.info("%s saved to %s", output_dir, output_path)
-
-            except Exception as e:  # pylint: disable=broad-except
-                logger.error("%s failed: %s", output_dir, e)
-                ctx.report_statuses[output_dir] = ExecutionStatus.FAILED
-                ctx.add_error(f"{output_dir}: {e}")
-                raise
-        if not ctx.errors:
-            ctx.dq_status = ExecutionStatus.SUCCESS
-            logger.info("All reports generated successfully")
-        return ctx
-
-    except Exception as e:  # pylint: disable=broad-except
-        logger.error("Report generation failed: %s", e)
-        ctx.dq_status = ExecutionStatus.FAILED
-        ctx.add_error(str(e))
-        raise
+    logger.info("All reports processed")
+    return ctx

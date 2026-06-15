@@ -76,7 +76,8 @@ def check_col_non_null(
             ok = False
     if errors and halt_on_failure:
         raise RuntimeError(
-            f"Null values found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details."
+            f"Null values found in {', '.join(errors)} column(s) of {dataset_name}."
+            " Check logs for details."
         )
     if ok:
         logger.info("[%s] %s non-null: OK.", dataset_name, ", ".join(column_names))
@@ -120,7 +121,8 @@ def check_col_unique(
             ok = False
     if errors and halt_on_failure:
         raise RuntimeError(
-            f"Duplicates found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details."
+            f"Duplicates found in {', '.join(errors)} column(s) of {dataset_name}."
+            " Check logs for details."
         )
 
     if ok:
@@ -129,17 +131,17 @@ def check_col_unique(
 
 
 def check_col_non_negative(
-    df: DataFrame, columns: list[str], dataset_name: str, halt_on_failure: bool = False
+    df: DataFrame, dataset_name: str, columns: list[str], halt_on_failure: bool = False
 ) -> bool:
     """
     Ensure numeric *columns* contain no negative values.
 
     :param df: DataFrame to check.
     :type df: pyspark.sql.DataFrame
-    :param columns: Column names to validate.
-    :type columns: list[str]
     :param dataset_name: Label used in log messages.
     :type dataset_name: str
+    :param columns: Column names to validate.
+    :type columns: list[str]
     :param halt_on_failure: Raise ``RuntimeError`` on failure when ``True``.
     :type halt_on_failure: bool
     :return: ``True`` when all columns pass.
@@ -163,7 +165,8 @@ def check_col_non_negative(
             ok = False
     if errors and halt_on_failure:
         raise RuntimeError(
-            f"Negative values found in {', '.join(errors)} column(s) of {dataset_name}. Check logs for details."
+            f"Negative values found in {', '.join(errors)} column(s) of {dataset_name}."
+            " Check logs for details."
         )
 
     if ok:

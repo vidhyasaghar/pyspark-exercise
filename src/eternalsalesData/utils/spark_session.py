@@ -22,7 +22,13 @@ def get_spark_session(app_name: str, logger=None) -> SparkSession:
     if logger:
         logger.info("Initialising SparkSession: %s", app_name)
     try:
-        spark = SparkSession.builder.appName(app_name).config("spark.sql.adaptive.enabled", "true").config("spark.sql.adaptive.advisoryPartitionSizeInBytes", "100MB").config("spark.sql.shuffle.partitions", "10").getOrCreate()  # type: ignore[attr-defined]
+        spark = (
+            SparkSession.builder.appName(app_name)
+            .config("spark.sql.adaptive.enabled", "true")
+            .config("spark.sql.adaptive.advisoryPartitionSizeInBytes", "100MB")
+            .config("spark.sql.shuffle.partitions", "10")
+            .getOrCreate()  # type: ignore[attr-defined]
+        )
     except Exception as e:
         if logger:
             logger.error("Failed to initialise SparkSession: %s", e)

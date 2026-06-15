@@ -50,7 +50,9 @@ def run_basic_checks(
     df3: DataFrame,
     ctx: PipelineContext,
 ) -> None:
-    """Run common data quality checks (row counts, uniqueness, nulls, non-negative, referential integrity) on all datasets.
+    """Run common data quality checks on all datasets.
+
+    Checks: row counts, uniqueness, nulls, non-negative values.
 
     :param df1: Employee_calls DataFrame (dataset_one).
     :type df1: DataFrame
@@ -82,7 +84,7 @@ def run_basic_checks(
         dq.check_row_count(df, expected_row_count, dataset_name, halt_row_count)
         dq.check_col_unique(df, dataset_name, ["id"], halt_col_unique)
         dq.check_col_non_null(df, dataset_name, ["id"], halt_col_non_null)
-        dq.check_col_non_negative(df, non_negative_cols, dataset_name, halt_col_non_negative)
+        dq.check_col_non_negative(df, dataset_name, non_negative_cols, halt_col_non_negative)
 
 
 def run_intermediate_checks(

@@ -226,28 +226,28 @@ def test_check_col_unique_empty_dataframe(spark: SparkSession) -> None:
 
 def test_check_col_non_negative_passes(spark: SparkSession) -> None:
     df = spark.createDataFrame([(1, 10), (2, 20)], ["qty", "price"])
-    assert check_col_non_negative(df, ["qty", "price"], DATASET) is True
+    assert check_col_non_negative(df, DATASET, ["qty", "price"]) is True
 
 
 def test_check_col_non_negative_zero_is_allowed(spark: SparkSession) -> None:
     df = spark.createDataFrame([(0,), (1,), (5,)], ["qty"])
-    assert check_col_non_negative(df, ["qty"], DATASET) is True
+    assert check_col_non_negative(df, DATASET, ["qty"]) is True
 
 
 def test_check_col_non_negative_halt_true_raises(spark: SparkSession) -> None:
     df = spark.createDataFrame([(-1,)], ["qty"])
     with pytest.raises(RuntimeError, match="qty"):
-        check_col_non_negative(df, ["qty"], DATASET, halt_on_failure=True)
+        check_col_non_negative(df, DATASET, ["qty"], halt_on_failure=True)
 
 
 def test_check_col_non_negative_halt_false_returns_false(spark: SparkSession) -> None:
     df = spark.createDataFrame([(-1,)], ["qty"])
-    assert check_col_non_negative(df, ["qty"], DATASET, halt_on_failure=False) is False
+    assert check_col_non_negative(df, DATASET, ["qty"], halt_on_failure=False) is False
 
 
 def test_check_col_non_negative_halt_none_returns_false(spark: SparkSession) -> None:
     df = spark.createDataFrame([(-1,)], ["qty"])
-    assert check_col_non_negative(df, ["qty"], DATASET, halt_on_failure=None) is False  # type: ignore[arg-type]
+    assert check_col_non_negative(df, DATASET, ["qty"], halt_on_failure=None) is False  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(
@@ -272,7 +272,7 @@ def test_check_col_non_negative_column_failures(
 
     # Return value
     with caplog.at_level(logging.WARNING, logger=DQ_LOGGER):
-        assert check_col_non_negative(df, columns, DATASET, halt_on_failure=False) is False
+        assert check_col_non_negative(df, DATASET, columns, halt_on_failure=False) is False
 
     # Log content: each failing column gets its own warning line
     log_text = " ".join(r.message for r in caplog.records)
@@ -283,7 +283,7 @@ def test_check_col_non_negative_column_failures(
 
     # Error message on halt: only failing columns named
     with pytest.raises(RuntimeError) as exc_info:
-        check_col_non_negative(df, columns, DATASET, halt_on_failure=True)
+        check_col_non_negative(df, DATASET, columns, halt_on_failure=True)
     error_msg = str(exc_info.value)
     for col in fail_cols:
         assert col in error_msg
@@ -294,9 +294,9 @@ def test_check_col_non_negative_column_failures(
 def test_check_col_non_negative_nonexistent_column_raises(spark: SparkSession) -> None:
     df = spark.createDataFrame([(1,)], ["qty"])
     with pytest.raises(ValueError, match="nonexistent_col"):
-        check_col_non_negative(df, ["nonexistent_col"], DATASET)
+        check_col_non_negative(df, DATASET, ["nonexistent_col"])
 
 
 def test_check_col_non_negative_empty_column_list(spark: SparkSession) -> None:
     df = spark.createDataFrame([(1,)], ["qty"])
-    assert check_col_non_negative(df, [], DATASET) is True
+    assert check_col_non_negative(df, DATASET, []) is True
