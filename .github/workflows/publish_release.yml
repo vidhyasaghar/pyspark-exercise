@@ -12,7 +12,7 @@ jobs:
     clean-code-check:
         uses: ./.github/workflows/ci_clean-code-check.yml
 
-    project-build:
+    build-and-release:
         needs: clean-code-check
         runs-on: ubuntu-latest
         steps:
@@ -31,14 +31,8 @@ jobs:
             - name: Build package
               run: uv build
 
-    create-release:
-        needs: project-build
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-
             - name: Create GitHub Release
-              uses: softprops/action-gh-release@v1
+              uses: softprops/action-gh-release@v2
               with:
                 files: dist/*
                 draft: false

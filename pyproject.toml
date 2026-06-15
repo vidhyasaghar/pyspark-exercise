@@ -30,12 +30,12 @@ dev = [
 
 # --- Black ---
 [tool.black]
-line-length = 500
+line-length = 100
 target-version = ["py310"]
 
 # --- Pylint ---
 [tool.pylint.format]
-max-line-length = 500
+max-line-length = 100
 
 # --- Mypy ---
 [tool.mypy]
