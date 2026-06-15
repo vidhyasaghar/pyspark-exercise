@@ -29,7 +29,7 @@
                     "editor.defaultFormatter": "ms-python.black-formatter",
                     "editor.formatOnSave": true
                 },
-                "black-formatter.args": ["--line-length", "100"],
+                "black-formatter.args": [],
                 "pylint.enabled": true,
                 "mypy-type-checker.enable": true,
                 "python.analysis.typeCheckingMode": "basic",

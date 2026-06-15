@@ -3,7 +3,7 @@
 from pathlib import Path
 from pyspark.sql import DataFrame
 
-from sales_data.utils.logger_config import get_logger
+from eternalsalesdata.utils.logger_config import get_logger
 
 logger = get_logger(__name__)
 
